@@ -7,7 +7,7 @@ $(document).ready(function() {
   var source = $("#movie-card-template").html();
   var movieTemplate = Handlebars.compile(source);
 
-  $("#movie-search-form").on("submit", function() {
+  $("#movie-search-form").on("submit", function(event) {
     event.preventDefault();
 
     //grab value within input box
@@ -22,31 +22,32 @@ $(document).ready(function() {
         s: movieTitle
       },
       success: function(movies, textStatus, jqXHR) {
-        //on succces, cycle through results and grab imdbID
-        for (i = 0; i < movies.Search.length; i++) {
-          var imdbID = movies.Search[i].imdbID;
+        //on succces, cycle through results and grab imdbID if response != False
+        if (movies.Response === "False") {
+          alert("Movie info not found.")
+        } else {
+          $("#search-input-box").hide();
 
-          //execute another ajax request using imdbID for full movie info
-          $.ajax({
-            type: "GET",
-            url: baseURL,
-            data: {
-              i: imdbID
-            },
-            success: function(movie) {
-              //on success, append movie data using handlebars template
-              $("#search-input-box").fadeOut("slow", function() {
+          movies.Search.forEach(function(movie) {
+            $.ajax({
+              type: "GET",
+              url: baseURL,
+              data: {
+                i: movie.imdbID
+              },
+              success: function(movie) {
+                //on success, append movie data using handlebars template
                 $("#movie-card-container").append(movieTemplate(movie));
-              });
-            },
-            error: function() {
-              alert("Error!");
-            }
+              },
+              error: function() {
+                alert("Error getting movie via ID!");
+              }
+            });
           });
         };
       },
       error: function() {
-        alert("No movies found!");
+        alert("Error retrieving movie info!");
       }
     });
   });
